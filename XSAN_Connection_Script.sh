@@ -2,6 +2,29 @@
 
 xsan_volume="XSAN_Volume" # XSAN volume name
 
+# Connect to QSAN
+connect_qsan() { 
+    echo "INFO: Connecting to QSAN"
+    xsanctl mount $xsan_volume
+}
+
+restart_xsan_service() {
+    if launchctl list | grep -q "xsan"
+    then
+        echo "INFO: XSAN service is running. Restarting service."
+        echo "INFO: Unloading..."
+        launchctl unload /System/Library/LaunchDaemons/com.apple.xsan.plist | true
+        echo "INFO: Loading..."
+        launchctl load -w /System/Library/LaunchDaemons/com.apple.xsan.plist
+        if [ $? = 0 ]
+        then
+            echo "INFO: Successfully restarted XSAN service."
+            sleep 8 # wait for xsan service to attept to connect to QSAN
+            
+    else
+
+}
+
 echo "------------------------------------"
 echo "Starting XSAN connection utility"
 echo "------------------------------------"
@@ -17,7 +40,7 @@ else
 fi
 
 # Check if XSAN Profile is installed
-if sudo profiles -P | grep -q "com.apple.xsan.6"
+if sudo profiles -P | grep -q "com.apple.xsan."
 then
     echo "INFO: QSAN profile installed"
 else 
@@ -33,22 +56,29 @@ then
     network_interface_name=$(route -n get $xsan_volume | grep "interface" | awk -F ':\ ' '{print $2}')
     echo "INFO: Network interface is $network_interface_name."
 else
-    echo "ERROR. Unable to ping QSAN"
+    echo "ERROR. Unable to ping QSAN!"
     exit 1
 fi
 
 # Checks interface speed
 network_interface_speed=$(networksetup -getmedia $network_interface_name | grep "Active" | awk -F ': ' '{print $2}')
-if [[ if $network_interface_speed = "" ]]
 
-
-
-
+if echo $network_interface_speed | grep -q "10G"
+then
+    echo "INFO: Network interface speed is $network_interface_speed."
+else
+    echo "WARNING: Network interface speed is $network_interface_speed. Connect to 10G network and confirm network service order. Continuing..."
+fi
 
 # Check if XSAN service is started
+if launchctl list | grep -q "xsan"
+then
+    echo "INFO: XSAN service is currently running"
+else
+    echo "WARNING: XSAN service not running"
+fi
 
-# Attempt to connect QSAN
-## Restart XSAN service if unsuccessful
+
 
 # Reattempt connection after restarting XSAN
 
