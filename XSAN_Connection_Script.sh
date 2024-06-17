@@ -100,12 +100,19 @@ else
 fi
 
 # Check if connected to the correct network + XSAN is reachable
-if ping -c 1 $xsan_volume
+if ping -c 1 $xsan_volume > /dev/null
 then
     echo "INFO: $xsan_volume is reachable."
     # Checks which interface is used to connect to the XSAN Volume
     network_interface_name=$(route -n get $xsan_volume | grep "interface" | awk -F ':\ ' '{print $2}')
     echo "INFO: Network interface is $network_interface_name."
+    
+    # Checks that network interface is not a VPN connection
+    if echo "$network_interface_name" | grep -q "utun"
+    then
+        notify_user "ERROR: Cannot connect to $xsan_volume over VPN connection"
+        exit 1
+    fi
 else
     notify_user "ERROR. Unable to ping $xsan_volume!"
     exit 1
@@ -113,7 +120,6 @@ fi
 
 # Checks interface speed
 network_interface_speed=$(networksetup -getmedia $network_interface_name | grep "Active" | awk -F ': ' '{print $2}')
-
 if echo $network_interface_speed | grep -q "10G"
 then
     echo "INFO: Network interface speed is $network_interface_speed."
