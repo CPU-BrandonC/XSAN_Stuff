@@ -11,7 +11,7 @@ notify_failed=""
 current_user=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }' )
 
 force_disconnect_xsan() {
-    xsanctl unmount QSAN -f
+    xsanctl unmount "$xsan_volume" -f
     if [ $? = 0 ]
     then
         notify_user "SUCCESS: Disconnected from $xsan_volume"
@@ -24,7 +24,7 @@ force_disconnect_xsan() {
 
 disconnect_xsan() {
     echo "INFO: Attempting to gracefully disconnect $xsan_volume..."
-    xsanctl unmount QSAN
+    xsanctl unmount "$xsan_volume"
     if [ $? = 0 ]
     then
         notify_user "SUCCESS: Disconnected from $xsan_volume"
